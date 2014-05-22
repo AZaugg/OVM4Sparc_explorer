@@ -56,10 +56,16 @@ class cluster(object):
 class machine(object):
 	def __init__(self, ncpu, mem, name=None, cluster=None):
 		self.name = name
-		self.ncpu = ncpu
-		self.mem = mem
+		self.ncpu = float(ncpu)
+		self.mem = float(mem)
 		self.cluster = ""
 		self.ldomLst = []
+
+                # If it looks like we have more than 10TB of memory
+                # then its measured in KB not GB. Lets convert it.
+                if self.mem > 10240:
+                        self.mem = self.mem/1024/1024/1024
+
 	def __str__(self):
 		print self.name
 	def usedCPUCapacity(self):
@@ -129,7 +135,7 @@ def SSHGatherFacts(q):
 			if 'c' in m.group('FLAGS'):
 				# Found a control domain
 				# Division is to convert unit of measurement bytes to GB
-				c = cdom(float(m.group('NCPU')), float(m.group('MEM'))/1024/1024/1024)
+				c = cdom(m.group('NCPU'), m.group('MEM'))
 				c.name = m.group('LDOM')
 				target.ldomLst.append(c)
 			elif 'v' in m.group('FLAGS'):
@@ -138,7 +144,7 @@ def SSHGatherFacts(q):
 			elif 'n' in m.group('FLAGS'):
 				# found an ldom in a normal state
 				# Division is to convert unit of measurement bytes to GB
-				l = ldom(machine, m.group('LDOM'), float(m.group('NCPU')), float(m.group('MEM'))/1024/1024/1024)
+				l = ldom(machine, m.group('LDOM'), m.group('NCPU'), m.group('MEM'))
 				target.ldomLst.append(l)
 		q.task_done()
 	
